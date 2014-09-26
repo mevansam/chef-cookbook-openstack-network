@@ -90,10 +90,17 @@ directory ::File.dirname node['openstack']['network']['api']['auth']['cache_dir'
   only_if { node['openstack']['auth']['strategy'] == 'pki' }
 end
 
+if node['openstack']['compute']['driver'].split('.').first == 'xenapi'
+  xenapi_pass = get_password 'user', node['openstack']['compute']['xenapi']['connection_username']
+end
+
 template '/etc/neutron/rootwrap.conf' do
   source 'rootwrap.conf.erb'
   owner node['openstack']['network']['platform']['user']
   group node['openstack']['network']['platform']['group']
+  variables(
+    xenapi_pass: xenapi_pass    
+  )
   mode 00644
 end
 
@@ -323,6 +330,9 @@ when 'ml2'
     owner node['openstack']['network']['platform']['user']
     group node['openstack']['network']['platform']['group']
     mode 00644
+    variables(
+      local_ip: node["ipaddress"]
+    )
 
     notifies :restart, 'service[neutron-server]', :delayed
   end

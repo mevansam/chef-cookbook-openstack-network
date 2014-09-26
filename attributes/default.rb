@@ -179,6 +179,12 @@ default['openstack']['network']['allow_overlapping_ips'] = 'False'
 # use neutron root wrap
 default['openstack']['network']['use_rootwrap'] = true
 
+if !node['openstack']['compute']['driver'].nil? && node['openstack']['compute']['driver'].split('.').first == 'xenapi'
+  default['openstack']['network']['root_helper'] = "sudo neutron-rootwrap-xen-dom0 /etc/neutron/rootwrap.conf"
+else
+  default['openstack']['network']['root_helper'] = 'sudo neutron-rootwrap /etc/neutron/rootwrap.conf'
+end
+
 # DHCP lease duration
 default['openstack']['network']['dhcp_lease_duration'] = 86400
 
@@ -443,6 +449,13 @@ default['openstack']['network']['openvswitch']['bridge_mappings'] = nil
 #
 # Example: bridge_mapping_interface = br-eth1:eth1
 default['openstack']['network']['openvswitch']['bridge_mapping_interface'] = nil
+
+# (BoolOpt) Flag to enable l2-population extension. This option should only be
+# used in conjunction with ml2 plugin and l2population mechanism driver. It'll
+# enable plugin to populate remote ports macs and IPs (using fdb_add/remove
+# RPC calbbacks instead of tunnel_sync/update) on OVS agents in order to
+# optimize tunnel management.
+default['openstack']['network']['openvswitch']['l2_population'] = 'False'
 
 # Agent's polling interval in seconds
 default['openstack']['network']['openvswitch']['polling_interval'] = 2

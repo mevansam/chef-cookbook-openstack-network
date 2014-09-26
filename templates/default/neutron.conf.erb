@@ -350,7 +350,7 @@ quota_driver = <%= node["openstack"]["network"]["quota"]["driver"] %>
 # Change to "sudo" to skip the filtering and just run the comand directly
 # root_helper = sudo
 <% if node["openstack"]["network"]["use_rootwrap"] %>
-root_helper = "sudo neutron-rootwrap /etc/neutron/rootwrap.conf"
+root_helper = <%= node['openstack']['network']['root_helper'] %>
 <% end %>
 
 # =========== items for agent management extension =============
