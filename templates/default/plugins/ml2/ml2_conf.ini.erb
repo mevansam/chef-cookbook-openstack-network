@@ -72,7 +72,9 @@ vxlan_group = <%= node['openstack']['network']['ml2']['vxlan_group'] %>
 # connectivity.
 #
 # integration_bridge = br-int
-<% if node["openstack"]["network"]["openvswitch"]["integration_bridge"] -%>
+<% if @integration_bridge -%>
+integration_bridge = <%= @integration_bridge %>
+<% elsif node["openstack"]["network"]["openvswitch"]["integration_bridge"] -%>
 integration_bridge = <%= node["openstack"]["network"]["openvswitch"]["integration_bridge"] %>
 <% end -%>
 
@@ -112,11 +114,18 @@ local_ip = <%= @local_ip %>
 # server should have mappings to appropriate bridges on each agent.
 #
 # bridge_mappings =
-<% if node["openstack"]["network"]["openvswitch"]["bridge_mappings"] -%>
+<% if @bridge_mappings -%>
+bridge_mappings = <%= @bridge_mappings %>
+<% elsif node["openstack"]["network"]["openvswitch"]["bridge_mappings"] -%>
 bridge_mappings = <%= node["openstack"]["network"]["openvswitch"]["bridge_mappings"] %>
 <% end -%>
 
 [agent]
+<% if @root_helper -%>
+# Override of root_helper defined in neutron.conf
+root_helper = <%= @root_helper %>
+<% end -%>
+
 # Agent's polling interval in seconds
 polling_interval = <%= node["openstack"]["network"]["openvswitch"]["polling_interval"] %>
 

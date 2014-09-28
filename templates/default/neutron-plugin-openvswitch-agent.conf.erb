@@ -1,0 +1,20 @@
+# vim:set ft=upstart ts=2 et:
+<%= node["openstack"]["network"]["custom_template_banner"] %>
+description "Neutron OpenvSwitch Plugin Agent"
+author "Chuck Short <zulcss@ubuntu.com>"
+
+start on runlevel [2345] and started neutron-ovs-cleanup
+stop on runlevel [!2345]
+
+respawn
+
+chdir /var/run
+
+pre-start script
+  mkdir -p /var/run/neutron
+  chown neutron:root /var/run/neutron
+  cat /dev/null > <%= @log_file %>
+  chown neutron:root <%= @log_file %>
+end script
+
+exec start-stop-daemon --start --chuid neutron --exec /usr/bin/neutron-openvswitch-agent -- --config-file=/etc/neutron/neutron.conf --config-file=<%= @config_file %> --log-file=<%= @log_file %>

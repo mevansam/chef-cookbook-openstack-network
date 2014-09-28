@@ -178,12 +178,7 @@ default['openstack']['network']['allow_overlapping_ips'] = 'False'
 
 # use neutron root wrap
 default['openstack']['network']['use_rootwrap'] = true
-
-if !node['openstack']['compute']['driver'].nil? && node['openstack']['compute']['driver'].split('.').first == 'xenapi'
-  default['openstack']['network']['root_helper'] = "sudo neutron-rootwrap-xen-dom0 /etc/neutron/rootwrap.conf"
-else
-  default['openstack']['network']['root_helper'] = 'sudo neutron-rootwrap /etc/neutron/rootwrap.conf'
-end
+default['openstack']['network']['root_helper'] = 'sudo neutron-rootwrap /etc/neutron/rootwrap.conf'
 
 # DHCP lease duration
 default['openstack']['network']['dhcp_lease_duration'] = 86400
@@ -373,6 +368,9 @@ default['openstack']['network']['lbaas']['periodic_interval'] = 10
 default['openstack']['network']['lbaas_plugin'] = 'ovs'
 
 # ============================= OVS Plugin Configuration ===================
+
+# OVS physical network tag
+default['openstack']['network']['openvswitch']['physical_network_tag'] = "physnet1"
 
 # Type of network to allocate for tenant networks. The default value 'local' is
 # useful only for single-box testing and provides no connectivity between hosts.

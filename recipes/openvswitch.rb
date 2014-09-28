@@ -117,6 +117,52 @@ template '/etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini' do
   only_if { platform_family?('rhel') }
 end
 
+if main_plugin=="ml2"
+
+  template "/etc/init/neutron-plugin-openvswitch-agent.conf" do
+    source 'neutron-plugin-openvswitch-agent.conf.erb'
+    owner node['openstack']['network']['platform']['user']
+    group node['openstack']['network']['platform']['group']
+    mode 00644
+    variables(
+      config_file: "/etc/neutron/plugins/ml2/ml2_conf.ini",
+      log_file: "/var/log/neutron/openvswitch-agent.log"
+    )
+    notifies :restart, 'service[neutron-plugin-openvswitch-agent]', :delayed
+    only_if { platform_family?('debian') }
+  end
+
+  if !node['openstack']['compute']['driver'].nil? && 
+    node['openstack']['compute']['driver'].split('.').first == 'xenapi'
+
+    neutron_ovs_agent = "#{platform_options['neutron_openvswitch_agent_service']}-domU"
+
+    upstart_file = "/etc/init/#{neutron_ovs_agent}.conf"
+    template upstart_file do
+      source 'neutron-plugin-openvswitch-agent.conf.erb'
+      owner node['openstack']['network']['platform']['user']
+      group node['openstack']['network']['platform']['group']
+      mode 00644
+      variables(
+        config_file: "/etc/neutron/plugins/ml2/ml2_conf_domU.ini",
+        log_file: "/var/log/neutron/openvswitch-agent_domU.log"
+      )
+      notifies :restart, "service[#{neutron_ovs_agent}]", :delayed
+      only_if { platform_family?('debian') }
+    end
+
+    service neutron_ovs_agent do
+      supports status: true, restart: true
+      action :enable
+      subscribes :restart, 'template[/etc/neutron/neutron.conf]'
+      if main_plugin=="ml2"
+        subscribes :restart, 'template[/etc/neutron/plugins/ml2/ml2_conf_domU.ini]'
+      end
+    end
+  end
+
+end
+
 service 'neutron-plugin-openvswitch-agent' do
   service_name platform_options['neutron_openvswitch_agent_service']
   supports status: true, restart: true
@@ -124,6 +170,9 @@ service 'neutron-plugin-openvswitch-agent' do
   subscribes :restart, 'template[/etc/neutron/neutron.conf]'
   if platform_family?('rhel')
     subscribes :restart, 'template[/etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini]'
+  end
+  if main_plugin=="ml2"
+    subscribes :restart, 'template[/etc/neutron/plugins/ml2/ml2_conf.ini]'
   end
 end
 

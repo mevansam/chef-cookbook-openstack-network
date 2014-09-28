@@ -337,6 +337,26 @@ when 'ml2'
     notifies :restart, 'service[neutron-server]', :delayed
   end
 
+  if !node['openstack']['compute']['driver'].nil? && 
+    node['openstack']['compute']['driver'].split('.').first == 'xenapi'
+
+    template_file_domU = '/etc/neutron/plugins/ml2/ml2_conf_domU.ini'
+
+    template template_file_domU do
+      source 'plugins/ml2/ml2_conf.ini.erb'
+      owner node['openstack']['network']['platform']['user']
+      group node['openstack']['network']['platform']['group']
+      mode 00644
+      variables(
+        integration_bridge: node['openstack']['xen']['network']['xen_int_network_bridge'],
+        bridge_mappings: "#{node['openstack']['network']['openvswitch']['physical_network_tag']}:#{node['openstack']['xen']['network']['vm_network_bridge']}",
+        local_ip: node["ipaddress"],
+        root_helper: "sudo neutron-rootwrap-xen-dom0 /etc/neutron/rootwrap.conf"
+      )
+    end
+
+  end
+
 when 'nec'
 
   template_file = '/etc/neutron/plugins/nec/nec.ini'
