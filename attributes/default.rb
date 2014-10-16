@@ -222,6 +222,10 @@ default['openstack']['network']['nova']['send_events_interval'] = 2
 # The scheduler class to use for scheduling to DHCP agents
 default['openstack']['network']['dhcp']['scheduler'] = 'neutron.scheduler.dhcp_agent_scheduler.ChanceScheduler'
 
+# Setting the dhcp log facility to either a syslog level or
+# a log file enables dhcp logging
+default["openstack"]["network"]["dhcp"]["log-facility"] = nil
+
 # Override the default mtu setting given to virtual machines
 # to 1454 to allow for tunnel and other encapsulation overhead.  You
 # can adjust this from 1454 to 1500 if you do not want any lowering

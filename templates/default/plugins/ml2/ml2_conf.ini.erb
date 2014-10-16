@@ -1,4 +1,9 @@
 <%= node['openstack']['network']['custom_template_banner'] %>
+<% if @hostname && !@hostname.empty? -%>
+[DEFAULT]
+host = <%= @hostname %>
+
+<% end -%>
 [ml2]
 # (ListOpt) List of network type driver entrypoints to be loaded from
 # the neutron.ml2.type_drivers namespace.
@@ -40,7 +45,11 @@ flat_networks = <%= node['openstack']['network']['ml2']['flat_networks'] %>
 #
 # network_vlan_ranges =
 # Example: network_vlan_ranges = physnet1:1000:2999,physnet2
+<% if @network_vlan_ranges -%>
+network_vlan_ranges = <%= @network_vlan_ranges %>
+<% else -%>
 network_vlan_ranges = <%= node['openstack']['network']['ml2']['network_vlan_ranges'] %>
+<% end -%>
 
 [ml2_type_gre]
 # (ListOpt) Comma-separated list of <tun_min>:<tun_max> tuples enumerating ranges of GRE tunnel IDs that are available for tenant network allocation
@@ -82,7 +91,9 @@ integration_bridge = <%= node["openstack"]["network"]["openvswitch"]["integratio
 # the server.  In most cases, the default value should be fine.
 #
 # tunnel_bridge = br-tun
-<% if node["openstack"]["network"]["openvswitch"]["tunnel_bridge"] -%>
+<% if @tunnel_bridge -%>
+tunnel_bridge = <%= @tunnel_bridge %>
+<% elsif node["openstack"]["network"]["openvswitch"]["tunnel_bridge"] -%>
 tunnel_bridge = <%= node["openstack"]["network"]["openvswitch"]["tunnel_bridge"] %>
 <% end -%>
 
@@ -141,7 +152,9 @@ polling_interval = <%= node["openstack"]["network"]["openvswitch"]["polling_inte
 # Example: tunnel_types = gre
 # Example: tunnel_types = vxlan
 # Example: tunnel_types = vxlan,gre
-tunnel_types = <%= node["openstack"]["network"]["openvswitch"]["tunnel_type"] %>
+<% if @tunnel_types -%>
+tunnel_types = <%= @tunnel_types %>
+<% end -%>
 
 # (IntOpt) This is the MTU size of veth interfaces.
 # Do not change unless you have a good reason to.
@@ -161,11 +174,19 @@ l2_population = <%= node["openstack"]["network"]["openvswitch"]["l2_population"]
 [securitygroup]
 # Firewall driver for realizing neutron security group function
 # Default: firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+<% if @fw_driver -%>
+firewall_driver = <%= @fw_driver %>
+<% else -%>
 firewall_driver = <%= node["openstack"]["network"]["openvswitch"]["fw_driver"] %>
+<% end -%>
 
 # Controls if neutron security group is enabled or not.
 # It should be false when you use nova security group.
+<% if @enable_security_group -%>
+enable_security_group = <%= @enable_security_group %>
+<% else -%>
 enable_security_group = <%= node["openstack"]["network"]["openvswitch"]["enable_security_group"] %>
+<% end -%>
 <% else -%>
 [securitygroup]
 # Controls if neutron security group is enabled or not.

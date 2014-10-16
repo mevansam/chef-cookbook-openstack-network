@@ -135,6 +135,20 @@ if main_plugin=="ml2"
   if !node['openstack']['compute']['driver'].nil? && 
     node['openstack']['compute']['driver'].split('.').first == 'xenapi'
 
+    # Patch neutron openvswitch agent. This fixes an issue where
+    # the openvswitch that updates the ovs bridges in dom0 throws
+    # an exception because the version string returned by the 
+    # ovs sub-system in Xen dom0 is not parsed correctly.
+    #
+    # note: This may be fixed post icehouse.
+
+    execute "patch neutron openvswitch agent" do
+      command "sed -i.bak 's" + 
+        "|ver = re.findall(\"\\\\d+\\\\.\\\\d+\", cmd)\\[0\\]" + 
+        "|ver = re.findall(\"\\\\d+\\\\.\\\\d+\", cmd)\\[0\\]\\n        if re.match(\"\\\\d+\\\\.\\\\d$\", ver):\\n            ver += \"0\"|' " + 
+        "/usr/lib/python2.7/dist-packages/neutron/agent/linux/ovs_lib.py"
+    end
+
     neutron_ovs_agent = "#{platform_options['neutron_openvswitch_agent_service']}-domU"
 
     upstart_file = "/etc/init/#{neutron_ovs_agent}.conf"
@@ -147,7 +161,7 @@ if main_plugin=="ml2"
         config_file: "/etc/neutron/plugins/ml2/ml2_conf_domU.ini",
         log_file: "/var/log/neutron/openvswitch-agent_domU.log"
       )
-      notifies :restart, "service[#{neutron_ovs_agent}]", :delayed
+      # notifies :restart, "service[#{neutron_ovs_agent}]", :delayed
       only_if { platform_family?('debian') }
     end
 
@@ -199,8 +213,20 @@ unless ['nicira', 'plumgrid', 'bigswitch'].include?(main_plugin)
 end
 
 unless ['nicira', 'plumgrid', 'bigswitch'].include?(main_plugin)
-  unless node['openstack']['network']['openvswitch']['bridge_mapping_interface'].to_s.empty?
-    ext_bridge_mapping = node['openstack']['network']['openvswitch']['bridge_mapping_interface']
+
+  ext_bridge_mapping = node['openstack']['network']['openvswitch']['bridge_mapping_interface']
+  if ext_bridge_mapping.kind_of?(Array)
+    ext_bridge_mapping.each do |mapping|
+      ext_bridge, ext_bridge_iface = mapping.split(':')
+      execute 'create data network bridge' do
+        command "ovs-vsctl add-br #{ext_bridge} -- add-port #{ext_bridge} #{ext_bridge_iface}"
+        action :run
+        not_if "ovs-vsctl br-exists #{ext_bridge}"
+        only_if "ip link show #{ext_bridge_iface}"
+        notifies :restart, 'service[neutron-plugin-openvswitch-agent]', :delayed
+      end
+    end
+  elsif !ext_bridge_mapping.to_s.empty?
     ext_bridge, ext_bridge_iface = ext_bridge_mapping.split(':')
     execute 'create data network bridge' do
       command "ovs-vsctl add-br #{ext_bridge} -- add-port #{ext_bridge} #{ext_bridge_iface}"

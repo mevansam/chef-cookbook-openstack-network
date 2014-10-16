@@ -331,7 +331,8 @@ when 'ml2'
     group node['openstack']['network']['platform']['group']
     mode 00644
     variables(
-      local_ip: node["ipaddress"]
+      local_ip: node["ipaddress"],
+      tunnel_types: node["openstack"]["network"]["openvswitch"]["tunnel_type"]
     )
 
     notifies :restart, 'service[neutron-server]', :delayed
@@ -348,10 +349,14 @@ when 'ml2'
       group node['openstack']['network']['platform']['group']
       mode 00644
       variables(
+        hostname: node['openstack']['xen']['host_name'],
         integration_bridge: node['openstack']['xen']['network']['xen_int_network_bridge'],
-        bridge_mappings: "#{node['openstack']['network']['openvswitch']['physical_network_tag']}:#{node['openstack']['xen']['network']['vm_network_bridge']}",
-        local_ip: node["ipaddress"],
-        root_helper: "sudo neutron-rootwrap-xen-dom0 /etc/neutron/rootwrap.conf"
+        bridge_mappings: "#{node['openstack']['network']['openvswitch']['physical_network_tag']}:#{node['openstack']['xen']['network']['xen_trunk_network_bridge']}",
+        local_ip: node['openstack']['xen']['host_ip'],
+        root_helper: "sudo neutron-rootwrap-xen-dom0 /etc/neutron/rootwrap.conf",
+        tunnel_types: node["openstack"]["network"]["openvswitch"]["tunnel_type"],
+        fw_driver: "neutron.agent.firewall.NoopFirewallDriver",
+        enable_security_group: "False"
       )
     end
 
