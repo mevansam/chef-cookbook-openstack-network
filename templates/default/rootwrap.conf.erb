@@ -10,9 +10,11 @@ filters_path=/etc/neutron/rootwrap.d,/usr/share/neutron/rootwrap
 # owned and only writeable by root
 exec_dirs=/sbin,/usr/sbin,/bin,/usr/bin
 
+<% if node['openstack']['network']['xenapi'] %>
 [xenapi]
 # XenAPI configuration is only required by the L2 agent if it is to
 # target a XenServer/XCP compute host's dom0.
 xenapi_connection_url=<%= node['openstack']['network']['xenapi']['connection_url'] %>
 xenapi_connection_username=<%= node['openstack']['network']['xenapi']['connection_username'] %>
 xenapi_connection_password=<%= @xenapi_pass %>
+<% end -%>
