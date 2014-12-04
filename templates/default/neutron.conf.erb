@@ -370,6 +370,9 @@ admin_tenant_name = <%= node["openstack"]["network"]["service_tenant_name"] %>
 admin_user = <%= node["openstack"]["network"]["service_user"] %>
 admin_password = <%= @service_pass %>
 signing_dir = <%= node["openstack"]["network"]["api"]["agent"]["signing_dir"] %>
+<% if node["openstack"]["endpoints"]["identity-api"]["insecure"] %>
+insecure = True
+<% end -%>
 
 [database]
 # This line MUST be changed to actually run the plugin.
