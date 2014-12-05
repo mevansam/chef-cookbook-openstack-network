@@ -143,6 +143,28 @@ platform_options['neutron_client_packages'].each do |pkg|
   end
 end
 
+ruby_block "retrieve nova admin user tenant id for neutron configuration" do
+    block do
+    compute_service_tenant_name = node['openstack']['compute']['service_tenant_name']
+
+    admin_user = node['openstack']['identity']['admin_user']
+    admin_tenant_name = node['openstack']['identity']['admin_tenant_name']
+    admin_pass = get_password 'user', admin_user
+
+    region = node['openstack']['region']
+
+    node.override['openstack']['network']['nova']['admin_tenant_id'] = 
+      shell( "keystone --insecure " +
+        "--os-auth-url #{identity_endpoint} " + 
+        "--os-region-name #{region} " + 
+        "--os-tenant-name #{admin_tenant_name} " + 
+        "--os-username #{admin_user} " + 
+        "--os-password #{admin_pass} tenant-list | " + 
+        "awk '$4==\"#{compute_service_tenant_name}\" { print $2 }'" )
+    end
+    only_if { node['openstack']['network']['nova']['admin_tenant_id'].nil? }
+end
+
 # all recipes include common.rb, and some servers
 # may just be running a subset of agents (like l3_agent)
 # and not the api server components, so we ignore restart
@@ -164,7 +186,7 @@ nova_endpoint = endpoint 'compute-api'
 # https://github.com/openstack/neutron/blob/master/neutron/common/config.py#L89
 # https://github.com/openstack/neutron/blob/master/neutron/notifiers/nova.py#L43
 nova_version = node['openstack']['network']['nova']['url_version']
-nova_endpoint = uri_from_hash('host' => nova_endpoint.host.to_s, 'port' => nova_endpoint.port.to_s, 'path' => nova_version)
+nova_endpoint = uri_from_hash('scheme' => nova_endpoint.scheme.to_s, 'host' => nova_endpoint.host.to_s, 'port' => nova_endpoint.port.to_s, 'path' => nova_version)
 nova_admin_pass = get_password 'service', 'openstack-compute'
 ruby_block 'query service tenant uuid' do
   # query keystone for the service tenant uuid

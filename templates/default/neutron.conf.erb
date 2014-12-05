@@ -299,6 +299,11 @@ nova_admin_password = <%= @nova_admin_pass %>
 # Authorization URL for connection to nova in admin context.
 nova_admin_auth_url = <%= @identity_admin_endpoint.to_s %>
 
+# Boolean to control ignoring SSL errors on the nova url
+<% if node["openstack"]["endpoints"]["compute-api"]["insecure"] %>
+nova_api_insecure = True
+<% end -%>
+
 # Number of seconds between sending events to nova if there are any events to send
 send_events_interval = <%= node["openstack"]["network"]["nova"]["send_events_interval"] %>
 
