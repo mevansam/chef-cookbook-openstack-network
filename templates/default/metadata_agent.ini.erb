@@ -11,6 +11,10 @@ admin_tenant_name = <%= node["openstack"]["network"]["service_tenant_name"] %>
 admin_user = <%= node["openstack"]["network"]["service_user"] %>
 admin_password = <%= @service_pass %>
 
+<% if node["openstack"]["endpoints"]["network-api"]["insecure"] %>
+auth_insecure = True
+<% end -%>
+
 # IP address used by Nova metadata server
 # Default: nova_metadata_ip = 127.0.0.1
 <% if node["openstack"]["network"]["metadata"]["nova_metadata_ip"] -%>
