@@ -67,7 +67,7 @@ node['openstack']['db']['python_packages'][db_type].each do |pkg|
   end
 end
 
-directory '/etc/neutron/plugins' do
+directory '/etc/neutron' do
   recursive true
   owner node['openstack']['network']['platform']['user']
   group node['openstack']['network']['platform']['group']
